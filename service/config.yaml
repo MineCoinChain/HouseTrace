@@ -1,0 +1,127 @@
+name: "suyuan-service-network"
+#版本号
+version: 1.4.0
+#客户端 哪个组织的客户端的应用实例
+client:
+#  房管局
+  organization: Ofgj
+#  日志级别
+  logging:
+    level: info
+# 证书所在目录
+  cryptoconfig:
+    path: crypto-config
+# 这种方式就是把用户名和密码直接存储在本地的一个文件中，而用户和密码对通过一个别名来引用，这样可以避免密码明文格式可能会存在的安全问题
+  credentialStore:
+    path: /tmp/suyuan-service-store
+
+# 区块链密码服务提供者,指定加密策略
+  BCCSP:
+    security:
+      enabled: true
+      default:
+        provider: "SW"
+      hashAlgorithm: "SHA2"
+      softVerify: true
+      level: 256
+# 证书池策略，默认为false,提高身份认证速率
+  tlsCerts:
+    systemCertPool: true
+    client:
+      keyfile: /home/itcast/trace0/service/crypto-config/peerOrganizations/ofgj.itcast.cn/users/User1@ofgj.itcast.cn/tls/client.key
+      certfile: /home/itcast/trace0/service/crypto-config/peerOrganizations/ofgj.itcast.cn/users/User1@ofgj.itcast.cn/tls/client.crt
+
+      
+# channel 相关配置
+channels:
+# channelID
+  fgjorgschannel:
+# orderer 组织必须指定
+    orderers:
+      - orderer.itcast.cn
+# 添加到该 channel 中的组织的 peer 列表
+    peers:
+      # 房管局所有节点添加到 unionchannel
+      peer0.ofgj.itcast.cn:
+#      是否作为背书节点
+        endorsingPeer: true
+#        是否支持连代码查询
+        chaincodeQuery: true
+#        是否支持账本查询
+        ledgerQuery: true
+        eventSource: true
+
+      peer1.ofgj.itcast.cn:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+#策略
+    policies:
+#查询通道的配置信息
+      queryChannelConfig:
+        minResponses: 1
+        maxTargets: 1
+        retryOpts:
+          attempts: 5
+          initialBackoff: 500ms
+          maxBackoff: 5s
+          backoffFactor: 2.0
+
+# organizations 相关配置
+organizations:
+  ofgj:
+    # configtx.yaml organizations -> ID
+    mspid: ofgj.itcast.cn
+#    ca 服务用于识别用户身份的设置  ,如果不指定ca,这个地方可以不指定
+    cryptoPath: /home/itcast/trace0/service/crypto-config/peerOrganizations/ofgj.itcast.cn/users/{username}@ofgj.itcast.cn/msp
+    peers:
+    - peer0.ofgj.itcast.cn
+    - peer1.ofgj.itcast.cn
+    
+  ordererorg:
+    mspID: itcast.cn
+    cryptoPath: /home/itcast/trace0/service/crypto-config/ordererOrganizations/itcast.cn/users/Admin@itcast.cn/msp
+
+# orderer 相关配置
+orderers:
+  orderer.itcast.cn:
+    url: localhost:7050
+    grpcOptions:
+      ssl-target-name-override: orderer.itcast.cn
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+#    指定对应的pem文件
+    tlsCACerts:
+      path: /home/itcast/trace0/service/crypto-config/ordererOrganizations/itcast.cn/tlsca/tlsca.itcast.cn-cert.pem
+
+# peer 相关配置
+peers:
+  peer0.ofgj.itcast.cn:
+    url: grpcs://localhost:7051
+    eventUrl: localhost:7053
+    grpcOptions:
+      ssl-target-name-override: peer0.ofgj.itcast.cn
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+    tlsCACerts:
+      path: /home/itcast/trace0/service/crypto-config/peerOrganizations/ofgj.itcast.cn/tlsca/tlsca.ofgj.itcast.cn-cert.pem
+
+  peer1.ofgj.itcast.cn:
+    url: grpcs://localhost:8051
+    eventUrl: localhost:8053
+    grpcOptions:
+      ssl-target-name-override: peer1.ofgj.itcast.cn
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
+    tlsCACerts:
+      path: /home/itcast/trace0/service/crypto-config/peerOrganizations/ofgj.itcast.cn/tlsca/tlsca.ofgj.itcast.cn-cert.pem
